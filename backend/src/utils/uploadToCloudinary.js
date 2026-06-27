@@ -11,14 +11,14 @@ const uploadToCloudinary = (
         cloudinary.uploader.upload_stream(
           {
             folder: "ai-interview-copilot",
-            resource_type: "raw",
+            resource_type: "auto",
             public_id: fileName,
           },
           (error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
+            if (error) {
               reject(error);
+            } else {
+              resolve(result);
             }
           }
         );
