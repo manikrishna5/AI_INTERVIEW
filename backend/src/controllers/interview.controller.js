@@ -26,6 +26,11 @@ import {
   generateFinalReport,
 } from "../services/ai.service.js";
 
+import {
+  getUserInterviews,
+  getInterviewById,
+} from "../services/interview.service.js";
+
 export const generateInterview =
   async (req, res) => {
     try {
@@ -145,58 +150,73 @@ const evaluation =
     }
   };
 
-  export const completeInterview =
+export const completeInterview = async (req, res) => {
+  try {
+    const interview = await getInterview(req.params.id);
+
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview not found",
+      });
+    }
+
+    const total = interview.questions.reduce(
+      (sum, q) => sum + (q.score || 0),
+      0
+    );
+
+    const score = Math.round(
+      (total / (interview.questions.length * 10)) * 100
+    );
+
+    interview.overallScore = score;
+    interview.status = "completed";
+
+    // Generate report only once
+    const reportResponse =
+      await generateFinalReport(interview);
+
+    const report = JSON.parse(
+      cleanJson(reportResponse)
+    );
+
+    interview.strengths =
+      report.strengths || [];
+
+    interview.weaknesses =
+      report.weaknesses || [];
+
+    interview.recommendations =
+      report.recommendations || [];
+
+    await interview.save();
+
+    res.json({
+      success: true,
+      data: interview,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to complete interview",
+    });
+  }
+};
+
+export const getMyInterviews =
   async (req, res) => {
     try {
-      const interview =
-        await getInterview(
-          req.params.id
+      const interviews =
+        await getUserInterviews(
+          req.user._id
         );
-
-      if (!interview) {
-        return res.status(404).json({
-          success: false,
-          message: "Interview not found",
-        });
-      }
-
-      const total =
-        interview.questions.reduce(
-          (sum, q) => sum + q.score,
-          0
-        );
-
-      const score = Math.round(
-        (total /
-          (interview.questions.length * 10)) *
-          100
-      );
-
-      interview.overallScore = score;
-      interview.status = "completed";
-      const response =
-  await generateFinalReport(
-    interview
-  );
-
-const report =
-  JSON.parse(cleanJson(response));
-
-interview.strengths =
-  report.strengths;
-
-interview.weaknesses =
-  report.weaknesses;
-
-interview.recommendations =
-  report.recommendations;
-
-      await interview.save();
 
       res.json({
         success: true,
-        overallScore: score,
-        interview,
+        data: interviews,
       });
     } catch (error) {
       console.log(error);
@@ -204,7 +224,38 @@ interview.recommendations =
       res.status(500).json({
         success: false,
         message:
-          "Failed to complete interview",
+          "Failed to fetch interviews",
+      });
+    }
+  };
+
+  export const getInterviewDetails =
+  async (req, res) => {
+    try {
+      const interview =
+        await getInterviewById(
+          req.params.id
+        );
+
+      if (!interview) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Interview not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        data: interview,
+      });
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Failed to fetch interview",
       });
     }
   };

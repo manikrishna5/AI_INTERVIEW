@@ -126,17 +126,18 @@ Return ONLY valid JSON.
     return response.text;
   };
 
-  export const generateFinalReport =
+ export const generateFinalReport =
   async (interview) => {
     const prompt = `
 You are a senior technical interviewer.
 
-Based on this interview data,
-generate a final report.
+Analyze the following interview.
 
-Interview:
+Interview Data:
 
 ${JSON.stringify(interview)}
+
+Generate a final report.
 
 Return ONLY valid JSON.
 
@@ -149,9 +150,7 @@ Return ONLY valid JSON.
 
     const response =
       await ai.models.generateContent({
-        model:
-          "gemini-2.5-flash",
-
+        model: "gemini-2.5-flash",
         contents: prompt,
       });
 

@@ -56,3 +56,23 @@ export const saveAnswer =
 
     return interview;
   };
+export const getUserInterviews =
+  async (userId) => {
+    return await Interview.find({
+      user: userId,
+    })
+      .populate("resume")
+      .sort({
+        createdAt: -1,
+      });
+  };
+
+export const getInterviewById =
+  async (id) => {
+    return await Interview.findById(id)
+      .populate("resume")
+      .populate(
+        "user",
+        "-password"
+      );
+  };

@@ -6,9 +6,24 @@ import {
   generateInterview,
   submitAnswer,
   completeInterview,
+  getMyInterviews,
+  getInterviewDetails,
 } from "../controllers/interview.controller.js";
+
 const router =
   express.Router();
+
+router.get(
+  "/my-interviews",
+  protect,
+  getMyInterviews
+);
+
+router.get(
+  "/:id",
+  protect,
+  getInterviewDetails
+);
 
 router.post(
   "/generate/:resumeId",
@@ -27,4 +42,5 @@ router.post(
   protect,
   completeInterview
 );
+
 export default router;
