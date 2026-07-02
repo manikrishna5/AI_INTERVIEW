@@ -20,13 +20,17 @@ export const AuthProvider = ({
     );
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem(
-        "token",
-        token
-      );
-    }
-  }, [token]);
+  if (token) {
+    localStorage.setItem(
+      "token",
+      token
+    );
+  } else {
+    localStorage.removeItem(
+      "token"
+    );
+  }
+}, [token]);
 
   const logout = () => {
     localStorage.removeItem(
