@@ -103,6 +103,15 @@ function Login() {
         <button className="bg-black text-white p-3 rounded">
           Login
         </button>
+        <p className="text-center mt-4 text-gray-400">
+  Don't have an account?{" "}
+  <span
+    onClick={() => navigate("/register")}
+    className="text-blue-500 cursor-pointer hover:underline"
+  >
+    Register
+  </span>
+</p>
       </form>
     </div>
   );
