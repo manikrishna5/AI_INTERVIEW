@@ -79,78 +79,39 @@ ${JSON.stringify(parsedData)}
     return response.text;
   };
 
-export const evaluateAnswer =
-  async (
-    question,
-    answer
-  ) => {
+export const evaluateInterview =
+  async (interview) => {
     const prompt = `
-You are a senior technical interviewer.
+You are an expert technical interviewer.
 
-Question:
-${question}
-
-Candidate Answer:
-${answer}
-
-Evaluate the answer on a scale of 0-10.
-
-Scoring Rubric:
-10 - Perfect answer with deep understanding.
-8-9 - Correct answer with good explanation and minor omissions.
-6-7 - Mostly correct but missing important details.
-4-5 - Partially correct with significant gaps.
-2-3 - Poor understanding.
-0-1 - Completely incorrect.
-
-Be strict but fair.
+Evaluate all the following interview questions and answers and Give score ONLY between 0 and 10.
 
 Return ONLY valid JSON.
 
 {
-  "score": 0,
-  "summary": "",
+  "overallScore": number,
   "strengths": [],
-  "improvements": []
+  "weaknesses": [],
+  "recommendations": [],
+  "questions": [
+    {
+      "score": number,
+      "summary": "",
+      "strengths": [],
+      "improvements": []
+    }
+  ]
 }
+
+Interview:
+
+${JSON.stringify(interview)}
 `;
 
     const response =
       await ai.models.generateContent({
         model:
           "gemini-2.5-flash",
-
-        contents: prompt,
-      });
-
-    return response.text;
-  };
-
- export const generateFinalReport =
-  async (interview) => {
-    const prompt = `
-You are a senior technical interviewer.
-
-Analyze the following interview.
-
-Interview Data:
-
-${JSON.stringify(interview)}
-
-Generate a final report.
-
-Return ONLY valid JSON.
-
-{
-  "strengths": [],
-  "weaknesses": [],
-  "recommendations": []
-}
-`;
-
-    const response =
-      await ai.models.generateContent({
-        model: "gemini-2.5-flash",
         contents: prompt,
       });
 

@@ -14,3 +14,11 @@ body {
   color: white;
   font-family: Inter, system-ui, sans-serif;
 }
+
+summary {
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}

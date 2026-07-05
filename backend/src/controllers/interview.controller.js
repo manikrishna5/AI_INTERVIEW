@@ -4,8 +4,7 @@ import {
 
 import {
   generateQuestions,
-  evaluateAnswer,
-  generateFinalReport,
+  evaluateInterview,
 } from "../services/ai.service.js";
 
 import {
@@ -99,9 +98,8 @@ export const submitAnswer =
         });
       }
 
-      // SECURITY CHECK
       if (
-        interview.user.toString() !==
+        interview.user._id.toString() !==
         req.user._id.toString()
       ) {
         return res.status(403).json({
@@ -110,33 +108,16 @@ export const submitAnswer =
         });
       }
 
-      const question =
-        interview.questions[
-          questionIndex
-        ];
+      interview.questions[
+        questionIndex
+      ].answer = answer;
 
-      const response =
-        await evaluateAnswer(
-          question.question,
-          answer
-        );
-
-      const evaluation =
-        JSON.parse(
-          cleanJson(response)
-        );
-
-      const updated =
-        await saveAnswer(
-          interview._id,
-          questionIndex,
-          answer,
-          evaluation
-        );
+      await interview.save();
 
       res.json({
         success: true,
-        data: updated,
+        message:
+          "Answer saved successfully",
       });
     } catch (error) {
       console.log(error);
@@ -144,7 +125,7 @@ export const submitAnswer =
       res.status(500).json({
         success: false,
         message:
-          "Evaluation failed",
+          "Failed to save answer",
       });
     }
   };
@@ -165,9 +146,8 @@ export const completeInterview =
         });
       }
 
-      // SECURITY CHECK
       if (
-        interview.user.toString() !==
+        interview.user._id.toString() !==
         req.user._id.toString()
       ) {
         return res.status(403).json({
@@ -176,39 +156,18 @@ export const completeInterview =
         });
       }
 
-      const total =
-        interview.questions.reduce(
-          (sum, q) =>
-            sum + (q.score || 0),
-          0
-        );
-
-      const score =
-        Math.round(
-          (total /
-            (interview.questions
-              .length *
-              10)) *
-            100
-        );
-
-      interview.overallScore =
-        score;
-
-      interview.status =
-        "completed";
-
-      const reportResponse =
-        await generateFinalReport(
+      const response =
+        await evaluateInterview(
           interview
         );
 
       const report =
         JSON.parse(
-          cleanJson(
-            reportResponse
-          )
+          cleanJson(response)
         );
+
+      interview.overallScore =
+        report.overallScore;
 
       interview.strengths =
         report.strengths || [];
@@ -219,6 +178,31 @@ export const completeInterview =
       interview.recommendations =
         report.recommendations ||
         [];
+
+      report.questions.forEach(
+        (item, index) => {
+          interview.questions[
+            index
+          ].score =
+            item.score > 10
+    ? Math.round(item.score / 10)
+    : item.score;
+
+          interview.questions[
+            index
+          ].feedback = {
+            summary:
+              item.summary,
+            strengths:
+              item.strengths,
+            improvements:
+              item.improvements,
+          };
+        }
+      );
+
+      interview.status =
+        "completed";
 
       await interview.save();
 

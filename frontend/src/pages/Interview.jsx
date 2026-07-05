@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import api from "../services/api";
 import Navbar from "../components/Navbar";
 import Loader from "../components/Loader";
@@ -8,10 +11,23 @@ function Interview() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [interview, setInterview] = useState(null);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [interview, setInterview] =
+    useState(null);
+
+  const [currentQuestion, setCurrentQuestion] =
+    useState(0);
+
+  const [answer, setAnswer] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [finishing, setFinishing] =
+    useState(false);
 
   useEffect(() => {
     fetchInterview();
@@ -19,11 +35,16 @@ function Interview() {
 
   const fetchInterview = async () => {
     try {
-      const res = await api.get(`/interview/${id}`);
+      const res = await api.get(
+        `/interview/${id}`
+      );
+
       setInterview(res.data.data);
     } catch (err) {
       console.log(err);
-      alert("Failed to load interview");
+      alert(
+        "Failed to load interview"
+      );
     } finally {
       setLoading(false);
     }
@@ -31,95 +52,165 @@ function Interview() {
 
   const handleSubmit = async () => {
     if (!answer.trim()) {
-      return alert("Please enter an answer.");
+      return alert(
+        "Please enter an answer."
+      );
     }
 
     try {
-      await api.post(`/interview/${id}/answer`, {
-        questionIndex: currentQuestion,
-        answer,
-      });
+      setSubmitting(true);
 
-      setAnswer("");
+      await api.post(
+        `/interview/${id}/answer`,
+        {
+          questionIndex:
+            currentQuestion,
+          answer,
+        }
+      );
 
       if (
         currentQuestion <
         interview.questions.length - 1
       ) {
-        setCurrentQuestion((prev) => prev + 1);
-      } else {
-        await api.post(
-  `/interview/${id}/complete`
-);
+        setAnswer("");
 
-navigate(`/report/${id}`);
+        setCurrentQuestion(
+          (prev) => prev + 1
+        );
+      } else {
+        setFinishing(true);
+
+        await api.post(
+          `/interview/${id}/complete`
+        );
+
+        navigate(`/report/${id}`);
       }
     } catch (err) {
       console.log(err);
-      alert("Failed to submit answer.");
+      alert(
+        "Failed to submit answer."
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (loading) {
-  return <Loader />;
-}
+    return <Loader />;
+  }
+
+  if (finishing) {
+    return (
+      <>
+        <Navbar />
+
+        <div className="min-h-screen flex flex-col items-center justify-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+
+          <h2 className="text-3xl font-bold mb-4">
+            Generating Report...
+          </h2>
+
+          <p className="text-gray-400 text-center">
+            AI is analyzing your
+            interview.
+            <br />
+            This may take a few
+            seconds.
+          </p>
+        </div>
+      </>
+    );
+  }
 
   const question =
-    interview.questions[currentQuestion];
+    interview.questions[
+      currentQuestion
+    ];
 
   return (
     <>
       <Navbar />
-    <div className="min-h-screen p-10">
-      <div className="max-w-4xl mx-auto bg-slate-900 p-8 rounded-xl">
 
-        <h1 className="text-3xl font-bold mb-2">
-          Technical Interview
-        </h1>
+      <div className="min-h-screen p-10">
+        <div className="max-w-4xl mx-auto bg-slate-900 p-8 rounded-xl">
 
-        <p className="mb-8 text-gray-400">
-          Question {currentQuestion + 1} of{" "}
-          {interview.questions.length}
-        </p>
+          <h1 className="text-3xl font-bold mb-2">
+            Technical Interview
+          </h1>
 
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">
-            {question.question}
-          </h2>
+          <p className="mb-8 text-gray-400">
+            Question{" "}
+            {currentQuestion + 1} of{" "}
+            {
+              interview.questions
+                .length
+            }
+          </p>
 
-          <div className="flex gap-2 flex-wrap">
-            {question.skills?.map((skill) => (
-              <span
-                key={skill}
-                className="bg-blue-500 px-3 py-1 rounded-full text-sm"
-              >
-                {skill}
-              </span>
-            ))}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">
+              {question.question}
+            </h2>
+
+            <div className="flex gap-2 flex-wrap">
+              {question.skills?.map(
+                (skill) => (
+                  <span
+                    key={skill}
+                    className="bg-blue-500 px-3 py-1 rounded-full text-sm"
+                  >
+                    {skill}
+                  </span>
+                )
+              )}
+            </div>
           </div>
+
+          <textarea
+            rows="8"
+            value={answer}
+            onChange={(e) =>
+              setAnswer(
+                e.target.value
+              )
+            }
+            className="w-full rounded-lg p-4 text-black"
+            placeholder="Type your answer here..."
+          />
+
+          <button
+            onClick={
+              handleSubmit
+            }
+            disabled={
+              submitting
+            }
+            className="
+              mt-6
+              bg-blue-500
+              hover:bg-blue-600
+              px-6
+              py-3
+              rounded-lg
+              disabled:opacity-50
+              transition
+            "
+          >
+            {submitting
+              ? "Submitting..."
+              : currentQuestion ===
+                interview
+                  .questions
+                  .length -
+                  1
+              ? "Finish Interview"
+              : "Next Question"}
+          </button>
         </div>
-
-        <textarea
-          rows="8"
-          value={answer}
-          onChange={(e) =>
-            setAnswer(e.target.value)
-          }
-          className="w-full rounded-lg p-4 text-black"
-          placeholder="Type your answer here..."
-        />
-
-        <button
-          onClick={handleSubmit}
-          className="mt-6 bg-blue-500 px-6 py-3 rounded-lg"
-        >
-          {currentQuestion ===
-          interview.questions.length - 1
-            ? "Finish Interview"
-            : "Next Question"}
-        </button>
       </div>
-    </div>
     </>
   );
 }
