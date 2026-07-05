@@ -8,7 +8,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://ai-interview-fawn-six.vercel.app",
+      "https://ai-interview-jq2kuj51g-mani-krishna.vercel.app",
     ],
     credentials: true,
   })
