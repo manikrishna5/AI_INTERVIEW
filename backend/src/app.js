@@ -6,11 +6,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://ai-interview-fawn-six.vercel.app",
-      "https://ai-interview-a4f6jtjid-mani-krishna.vercel.app",
-    ],
+    origin: true,
     credentials: true,
   })
 );
