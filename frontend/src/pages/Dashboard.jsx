@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 function Dashboard() {
   const { logout } = useAuth();
@@ -11,6 +12,8 @@ function Dashboard() {
   };
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen p-10">
       <h1 className="text-4xl font-bold mb-8">
         AI Interview Copilot
@@ -43,6 +46,7 @@ function Dashboard() {
         </button>
       </div>
     </div>
+    </>
   );
 }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
+import Loader from "../components/Loader";
 
 function MyResumes() {
   const [resumes, setResumes] = useState([]);
@@ -64,16 +66,12 @@ function MyResumes() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <h1 className="text-2xl">
-          Loading Resumes...
-        </h1>
-      </div>
-    );
-  }
+  return <Loader />;
+}
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen p-10">
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-4xl font-bold">
@@ -147,6 +145,7 @@ function MyResumes() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

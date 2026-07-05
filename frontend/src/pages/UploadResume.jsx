@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 function UploadResume() {
   const [file, setFile] =
@@ -63,6 +64,8 @@ function UploadResume() {
     };
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen flex items-center justify-center">
       <form
         onSubmit={
@@ -95,6 +98,7 @@ function UploadResume() {
         </button>
       </form>
     </div>
+    </>
   );
 }
 
