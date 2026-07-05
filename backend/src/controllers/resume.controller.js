@@ -13,7 +13,6 @@ import {
 
 import cleanJson
   from "../utils/cleanJson.js";
-
 export const uploadResume = async (
   req,
   res
@@ -25,7 +24,8 @@ export const uploadResume = async (
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "Please upload a PDF",
+        message:
+          "Please upload a PDF",
       });
     }
 
@@ -33,7 +33,9 @@ export const uploadResume = async (
     const result =
       await uploadToCloudinary(
         req.file.buffer,
-        `${Date.now()}-${req.file.originalname}`
+        `${Date.now()}-${
+          req.file.originalname
+        }`
       );
 
     // Extract text from PDF
@@ -43,18 +45,36 @@ export const uploadResume = async (
       );
 
     // Parse with Gemini
-    const parsedText =
-      await parseResume(text);
+    let parsedData;
 
-    console.log(
-      "Gemini Response:",
-      parsedText
-    );
+    try {
+      const parsedText =
+        await parseResume(text);
 
-    const parsedData =
-  JSON.parse(
-    cleanJson(parsedText)
-  );
+      console.log(
+        "Gemini Response:",
+        parsedText
+      );
+
+      parsedData =
+        JSON.parse(
+          cleanJson(parsedText)
+        );
+    } catch (error) {
+      console.log(
+        "Gemini parsing failed:",
+        error.message
+      );
+
+      parsedData = {
+        skills: [],
+        education: [],
+        experience: [],
+        projects: [],
+        summary:
+          "AI parsing temporarily unavailable.",
+      };
+    }
 
     // Save resume
     const resume =
@@ -69,7 +89,7 @@ export const uploadResume = async (
         parsedData,
       });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message:
         "Resume uploaded successfully",
@@ -81,7 +101,7 @@ export const uploadResume = async (
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message:
         "Resume upload failed",
