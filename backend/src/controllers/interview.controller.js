@@ -4,32 +4,19 @@ import {
 
 import {
   generateQuestions,
+  evaluateAnswer,
+  generateFinalReport,
 } from "../services/ai.service.js";
 
 import {
   createInterview,
   getInterview,
-} from "../services/interview.service.js";
-
- import {
-  evaluateAnswer,
-} from "../services/ai.service.js";
-
-import {
   saveAnswer,
-} from "../services/interview.service.js";
-
-import cleanJson
-  from "../utils/cleanJson.js";
-
-import {
-  generateFinalReport,
-} from "../services/ai.service.js";
-
-import {
   getUserInterviews,
   getInterviewById,
 } from "../services/interview.service.js";
+
+import cleanJson from "../utils/cleanJson.js";
 
 export const generateInterview =
   async (req, res) => {
@@ -47,28 +34,31 @@ export const generateInterview =
         });
       }
 
+      // SECURITY CHECK
+      if (
+        resume.user.toString() !==
+        req.user._id.toString()
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
       const response =
         await generateQuestions(
           resume.parsedData
         );
 
-      const cleaned =
-  response
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
-    .trim();
-
-const parsed =
-  JSON.parse(
-    cleanJson(response)
-  );
+      const parsed =
+        JSON.parse(
+          cleanJson(response)
+        );
 
       const interview =
         await createInterview({
           user: req.user._id,
-
           resume: resume._id,
-
           questions:
             parsed.questions,
         });
@@ -87,8 +77,6 @@ const parsed =
       });
     }
   };
-
- 
 
 export const submitAnswer =
   async (req, res) => {
@@ -111,6 +99,17 @@ export const submitAnswer =
         });
       }
 
+      // SECURITY CHECK
+      if (
+        interview.user.toString() !==
+        req.user._id.toString()
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
       const question =
         interview.questions[
           questionIndex
@@ -122,10 +121,10 @@ export const submitAnswer =
           answer
         );
 
-const evaluation =
-  JSON.parse(
-    cleanJson(response)
-  );
+      const evaluation =
+        JSON.parse(
+          cleanJson(response)
+        );
 
       const updated =
         await saveAnswer(
@@ -150,61 +149,93 @@ const evaluation =
     }
   };
 
-export const completeInterview = async (req, res) => {
-  try {
-    const interview = await getInterview(req.params.id);
+export const completeInterview =
+  async (req, res) => {
+    try {
+      const interview =
+        await getInterview(
+          req.params.id
+        );
 
-    if (!interview) {
-      return res.status(404).json({
+      if (!interview) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Interview not found",
+        });
+      }
+
+      // SECURITY CHECK
+      if (
+        interview.user.toString() !==
+        req.user._id.toString()
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const total =
+        interview.questions.reduce(
+          (sum, q) =>
+            sum + (q.score || 0),
+          0
+        );
+
+      const score =
+        Math.round(
+          (total /
+            (interview.questions
+              .length *
+              10)) *
+            100
+        );
+
+      interview.overallScore =
+        score;
+
+      interview.status =
+        "completed";
+
+      const reportResponse =
+        await generateFinalReport(
+          interview
+        );
+
+      const report =
+        JSON.parse(
+          cleanJson(
+            reportResponse
+          )
+        );
+
+      interview.strengths =
+        report.strengths || [];
+
+      interview.weaknesses =
+        report.weaknesses || [];
+
+      interview.recommendations =
+        report.recommendations ||
+        [];
+
+      await interview.save();
+
+      res.json({
+        success: true,
+        data: interview,
+      });
+    } catch (error) {
+      console.log(error);
+
+      res.status(500).json({
         success: false,
-        message: "Interview not found",
+        message:
+          "Failed to complete interview",
       });
     }
-
-    const total = interview.questions.reduce(
-      (sum, q) => sum + (q.score || 0),
-      0
-    );
-
-    const score = Math.round(
-      (total / (interview.questions.length * 10)) * 100
-    );
-
-    interview.overallScore = score;
-    interview.status = "completed";
-
-    // Generate report only once
-    const reportResponse =
-      await generateFinalReport(interview);
-
-    const report = JSON.parse(
-      cleanJson(reportResponse)
-    );
-
-    interview.strengths =
-      report.strengths || [];
-
-    interview.weaknesses =
-      report.weaknesses || [];
-
-    interview.recommendations =
-      report.recommendations || [];
-
-    await interview.save();
-
-    res.json({
-      success: true,
-      data: interview,
-    });
-  } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to complete interview",
-    });
-  }
-};
+  };
 
 export const getMyInterviews =
   async (req, res) => {
@@ -229,7 +260,7 @@ export const getMyInterviews =
     }
   };
 
-  export const getInterviewDetails =
+export const getInterviewDetails =
   async (req, res) => {
     try {
       const interview =
@@ -242,6 +273,17 @@ export const getMyInterviews =
           success: false,
           message:
             "Interview not found",
+        });
+      }
+
+      // SECURITY CHECK
+      if (
+        interview.user._id.toString() !==
+        req.user._id.toString()
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized",
         });
       }
 
