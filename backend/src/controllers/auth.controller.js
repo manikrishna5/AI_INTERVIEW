@@ -8,8 +8,7 @@ export const register = async (
   res
 ) => {
   try {
-    const { name, email, password } =
-      req.body;
+    const { name, email, password } = req.body;
 
     const user = await registerUser(
       name,
